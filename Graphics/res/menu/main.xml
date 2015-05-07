@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.knpl.graphics.MainActivity" >
+
+    <item
+        android:id="@+id/action_mode_toggle"
+        android:title="@string/action_mode_toggle"
+        app:showAsAction="never"/>
+
+</menu>
