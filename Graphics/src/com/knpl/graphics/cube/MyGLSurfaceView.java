@@ -9,11 +9,8 @@ import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.content.res.AssetManager;
 import android.opengl.GLSurfaceView;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnTouchListener;
 
-public class MyGLSurfaceView extends GLSurfaceView implements OnTouchListener {
+public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListener {
 
 	private final MyRenderer renderer;
 	private boolean moveEye;
@@ -33,8 +30,9 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnTouchListener {
     	renderer = new MyRenderer(vsource, fsource);
     	setRenderer(renderer);
     	
+    	setOnTouchListener(new DragPinchInput(this));
+    	
     	moveEye = true;
-    	setOnTouchListener(this);
 	}
 
 	private static String readFile(InputStream is) throws Exception {
@@ -51,29 +49,87 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnTouchListener {
         
 		return baos.toString("UTF-8");
 	}
-
-	@Override
-	public boolean onTouch(View v, MotionEvent event) {
-		final int action = event.getActionMasked();
-		final float x = event.getX();
-		final float y = event.getY();
-		
-		if (action == MotionEvent.ACTION_DOWN) {
-			v.performClick();
-		}
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				renderer.doSomething(action, x, y, moveEye);
-			}
-		});
-		return true;
-	}
 	
 	public void toggleMode() {
 		this.moveEye = !moveEye;
 	}
 
+	@Override
+	public void startDrag(float x, float y) {
+	}
+
+	@Override
+	public void drag(float x0, float y0, float x1, float y1) {
+		final float xx0 = x0,
+					yy0 = y0,
+					xx1 = x1,
+					yy1 = y1;
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				if (moveEye)
+					renderer.dragEye(xx0, yy0, xx1, yy1);
+				else 
+					renderer.dragLight(xx0, yy0, xx1, yy1);
+			}
+		});
+	}
+
+	@Override
+	public void stopDrag(float x0, float y0, float x1, float y1) {
+		final float xx0 = x0,
+					yy0 = y0,
+					xx1 = x1,
+					yy1 = y1;
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				if (moveEye)
+					renderer.stopDragEye(xx0, yy0, xx1, yy1);
+				else 
+					renderer.stopDragLight(xx0, yy0, xx1, yy1);
+			}
+		});
+	}
+
+	@Override
+	public void startPinch(float x, float y, float r) {
+	}
+
+	@Override
+	public void pinch(float x, float y, float r0, float r1) {
+		final float xx = x,
+					yy = y,
+					rr0 = r0,
+					rr1 = r1;
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				if (moveEye)
+					renderer.pinchEye(xx, yy, rr0, rr1);
+				else 
+					renderer.pinchLight(xx, yy, rr0, rr1);
+			}
+		});
+	}
+
+	@Override
+	public void stopPinch(float x, float y, float r0, float r1) {
+		final float xx = x,
+				yy = y,
+				rr0 = r0,
+				rr1 = r1;
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				if (moveEye)
+					renderer.stopPinchEye(xx, yy, rr0, rr1);
+				else 
+					renderer.stopPinchLight(xx, yy, rr0, rr1);
+			}
+		});
+	}
+	
 	@Override
 	public boolean performClick() {
 		return super.performClick();
