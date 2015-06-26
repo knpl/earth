@@ -2,7 +2,7 @@ package com.knpl.graphics.cube;
 
 public class Sphere {
 	
-	private static final int N = 5;
+	public static final int N = 8;
 	
 	private static float[] data = null;
 	private static short[] idx = null;
@@ -15,18 +15,43 @@ public class Sphere {
 		return idx;
 	}
 	
-	public static void w(int index, double x, double y, double z, double the, double phi) {
-		// position
-		data[N * index + 0] = (float) x;
-		data[N * index + 1] = (float) y;
-		data[N * index + 2] = (float) z;
+	/* normals:
+	 * x = sin(phi)sin(the)
+	 * y = cos(phi)
+	 * z = sin(phi)cos(the)
+	 * 
+	 * tangents:
+	 * x =  cos(the)
+	 * y =  0
+	 * z = -sin(the)
+	 * 
+	 * cotangents:
+	 * x = sin(phi - pi/2)sin(the) = -cos(phi)sin(the)
+	 * y = cos(phi - pi/2)         =  sin(phi)
+	 * z = sin(phi - pi/2)cos(the) = -cos(phi)cos(the)
+	 */
+	public static void w(int index, double the, double phi) {
+		double sinphi, cosphi, sinthe, costhe;
+		sinphi = Math.sin(phi); cosphi = Math.cos(phi);
+		sinthe = Math.sin(the); costhe = Math.cos(the);
 		
-		data[N * index + 3] = (float) (the / (2 * Math.PI));
-		data[N * index + 4] = (float) (phi / Math.PI);
+		/* normals */
+		data[N * index + 0] = (float) (sinphi * sinthe);
+		data[N * index + 1] = (float) cosphi;
+		data[N * index + 2] = (float) (sinphi * costhe);
+		
+		/* tangents */
+		data[N * index + 3] = (float) costhe;
+		data[N * index + 4] = (float) 0;
+		data[N * index + 5] = (float) -sinthe;
+		
+		/* tex coordinates */
+		data[N * index + 6] = (float) (the / (2 * Math.PI));
+		data[N * index + 7] = (float) (phi / Math.PI);
 	}
 
 	public static float[] initSphere(int n) {
-		double phi, the, sinphi, cosphi, sinthe, costhe;
+		double phi, the;
 		final double step = (2 * Math.PI) / n;
 		final double halfstep = .5 * step;
 		int nvecs = (n + 1) * (n-1) + 2;
@@ -34,21 +59,17 @@ public class Sphere {
 		// build data
 		int k = 0;
 		data = new float[N * (nvecs)];
-		w(k++, 0, 1, 0, Math.PI, 0);
+		w(k++, Math.PI, 0);
 		phi = step;
 		for (int i = 0; i < n-1; ++i) {
 			the = 0;
 			for (int j = 0; j <= n; ++j) {
-				sinphi = Math.sin(phi);
-				cosphi = Math.cos(phi);
-				sinthe = Math.sin(the);
-				costhe = Math.cos(the);
-				w(k++, sinphi * sinthe, cosphi, sinphi * costhe, the, phi);
+				w(k++, the, phi);
 				the += step;
 			}
 			phi += halfstep;
 		}
-		w(k++, 0, -1, 0, Math.PI, Math.PI);
+		w(k++, Math.PI, Math.PI);
 		
 		// build indices
 		k = 0;

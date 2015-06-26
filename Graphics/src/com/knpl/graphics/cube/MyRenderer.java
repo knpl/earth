@@ -8,6 +8,7 @@ import java.nio.ShortBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
@@ -25,8 +26,8 @@ public class MyRenderer implements Renderer {
 	private float[] sphereData;
 	private short[] sphereIndexData;
 	
-	private final float[] eyeSC = {5, (float)(Math.PI/2), 0}; // {rho, phi, theta}
-	private final float[] lightSC = {5, (float)(Math.PI/2), 0}; // {rho, phi, theta}
+	private final float[] eyeSC = {2, (float)(Math.PI/2), 0}; // {rho, phi, theta}
+	private final float[] lightSC = {2, (float)(Math.PI/2), 0}; // {rho, phi, theta}
 	private float deyetheta, deyephi, deyerho,
 				  dlighttheta, dlightphi, dlightrho;
 	
@@ -35,7 +36,7 @@ public class MyRenderer implements Renderer {
 	private final FloatBuffer sphereVertices;
 	private final ShortBuffer sphereIndices;
 	
-	private int vboh, iboh, texh;
+	private int vboh, iboh, texh, spech, normh;
 	
 	private final String vshader,
 						 fshader;
@@ -43,8 +44,8 @@ public class MyRenderer implements Renderer {
 	private float[] viewMat, projMat;
 	
 	private int viewh, projh,
-				posh, texattrh,
-				samplerh,
+				vertattrh, tangattrh, texattrh,
+				texsamph, specsamph, normsamph,
 				lightposh;
 	
 	public MyRenderer(String vshader, String fshader) {
@@ -73,33 +74,75 @@ public class MyRenderer implements Renderer {
 		projMat = new float[16];
 	}
 	
-	private static int loadTexture() {
-		int[] textures = new int[1];
-		GLES20.glGenTextures(1, textures, 0);
-		if (textures[0] == 0) {
-			throw new RuntimeException("Failed to generate texture");
+	private void loadTextures() {
+		int[] textures = new int[3];
+		GLES20.glGenTextures(3, textures, 0);
+		for (int i = 0; i < textures.length; ++i) {
+			if (textures[i] <= 0) {
+				throw new RuntimeException("Failed to generate textures.");
+			}
 		}
+		texh = textures[0];
+		normh = textures[1];
+		spech = textures[2];
 		
 		BitmapFactory.Options opts = new BitmapFactory.Options();
 		opts.inScaled = false;
-		Bitmap bmp = BitmapFactory.decodeResource(
-				GraphicsApp.getAppContext().getResources(),
-				R.drawable.earth1110, opts);
+		Resources res = GraphicsApp.getAppContext().getResources();
 		
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+		Bitmap bmp = BitmapFactory.decodeResource(res, R.drawable.earth, opts);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texh);
 		GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
 		GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
-
 		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
 				GLES20.GL_LINEAR_MIPMAP_LINEAR);
 		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
 				GLES20.GL_LINEAR);
-		
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-		
 		bmp.recycle();
 		
-		return textures[0];
+		bmp = BitmapFactory.decodeResource(res, R.drawable.earth_normal, opts);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, normh);
+		GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
+		GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+				GLES20.GL_LINEAR_MIPMAP_LINEAR);
+		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
+				GLES20.GL_LINEAR);
+		bmp.recycle();
+		
+		bmp = BitmapFactory.decodeResource(res, R.drawable.earth_spec, opts);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, spech);
+		GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
+		GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+				GLES20.GL_LINEAR_MIPMAP_LINEAR);
+		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
+				GLES20.GL_LINEAR);
+		bmp.recycle();
+		
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,  0);
+	}
+	
+	private void loadGeometry() {
+		int[] a = new int[2];
+		GLES20.glGenBuffers(2, a, 0);
+		vboh = a[0];
+		iboh = a[1];
+		
+		if (vboh <= 0 || iboh <= 0) {
+			throw new RuntimeException("Generating buffers failed.");
+		}
+		
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboh);
+		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, sphereVertices.capacity() * SIZEOF_FLOAT,
+							sphereVertices, GLES20.GL_STATIC_DRAW);
+		
+		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, iboh);
+		GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, sphereIndices.capacity() * SIZEOF_SHORT,
+							sphereIndices, GLES20.GL_STATIC_DRAW);
+		
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	
 	@Override
@@ -143,7 +186,8 @@ public class MyRenderer implements Renderer {
 		GLES20.glAttachShader(ph, vsh);
 		GLES20.glAttachShader(ph, fsh);
 		GLES20.glBindAttribLocation(ph, 0, "pos");
-		GLES20.glBindAttribLocation(ph, 1, "tex");
+		GLES20.glBindAttribLocation(ph, 1, "tang");
+		GLES20.glBindAttribLocation(ph, 3, "tex");
 		GLES20.glLinkProgram(ph);
 		GLES20.glGetProgramiv(ph, GLES20.GL_LINK_STATUS, status, 0);
 		if (status[0] == 0) {
@@ -151,36 +195,22 @@ public class MyRenderer implements Renderer {
 			throw new RuntimeException("Could not link program");
 		}
 		
-		texh = loadTexture();
-		samplerh = GLES20.glGetUniformLocation(ph, "sampler");
+		
+		texsamph = GLES20.glGetUniformLocation(ph, "texsamp");
+		normsamph = GLES20.glGetUniformLocation(ph, "normsamp");
+		specsamph = GLES20.glGetUniformLocation(ph, "specsamp");
 		viewh = GLES20.glGetUniformLocation(ph, "view");
 		projh = GLES20.glGetUniformLocation(ph, "proj");
 		lightposh = GLES20.glGetUniformLocation(ph, "lightpos");
-		posh = GLES20.glGetAttribLocation(ph, "pos");
+		
+		vertattrh = GLES20.glGetAttribLocation(ph, "pos");
+		tangattrh = GLES20.glGetAttribLocation(ph, "tang");
 		texattrh = GLES20.glGetAttribLocation(ph, "tex");
 		
 		GLES20.glUseProgram(ph);
 		
-		int[] a = new int[1];
-		GLES20.glGenBuffers(1, a, 0);
-		vboh = a[0];
-		GLES20.glGenBuffers(1, a, 0);
-		iboh = a[0];
-		
-		if (vboh <= 0 || iboh <= 0) {
-			throw new RuntimeException("Generating buffers failed.");
-		}
-		
-		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboh);
-		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, sphereVertices.capacity() * SIZEOF_FLOAT,
-							sphereVertices, GLES20.GL_STATIC_DRAW);
-		
-		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, iboh);
-		GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, sphereIndices.capacity() * SIZEOF_SHORT,
-							sphereIndices, GLES20.GL_STATIC_DRAW);
-		
-		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+		loadTextures();
+		loadGeometry();
 	}
 
 	@Override
@@ -220,13 +250,23 @@ public class MyRenderer implements Renderer {
 		
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texh);
-		GLES20.glUniform1i(samplerh, 0);
+		GLES20.glUniform1i(texsamph, 0);
 		
-		final int stride = 5 * SIZEOF_FLOAT;
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, normh);
+		GLES20.glUniform1i(normsamph, 1);
+		
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE2);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, spech);
+		GLES20.glUniform1i(specsamph, 2);
+		
+		final int stride = Sphere.N * SIZEOF_FLOAT;
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboh);
-		GLES20.glVertexAttribPointer(posh, 3, GLES20.GL_FLOAT, false, stride, 0);
-		GLES20.glEnableVertexAttribArray(posh);
-		GLES20.glVertexAttribPointer(texattrh, 2, GLES20.GL_FLOAT, false, stride, 3 * SIZEOF_FLOAT);
+		GLES20.glVertexAttribPointer(vertattrh, 3, GLES20.GL_FLOAT, false, stride, 0);
+		GLES20.glEnableVertexAttribArray(vertattrh);
+		GLES20.glVertexAttribPointer(tangattrh, 3, GLES20.GL_FLOAT, false, stride, 3 * SIZEOF_FLOAT);
+		GLES20.glEnableVertexAttribArray(tangattrh);
+		GLES20.glVertexAttribPointer(texattrh, 2, GLES20.GL_FLOAT, false, stride, 6 * SIZEOF_FLOAT);
 		GLES20.glEnableVertexAttribArray(texattrh);
 		
 		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, iboh);
@@ -237,8 +277,8 @@ public class MyRenderer implements Renderer {
 	}
 	
 	public void dragEye(float x0, float y0, float x1, float y1) {
-		deyetheta = (float) ((x0 - x1)/width * Math.PI);
-		deyephi = (float) ((y0 - y1)/height * Math.PI);
+		deyetheta = (float) ((x0 - x1)/width * eyeSC[0]);
+		deyephi = (float) ((y0 - y1)/height * eyeSC[0]);
 	}
 	
 	public void stopDragEye(float x0, float y0, float x1, float y1) {
@@ -257,8 +297,8 @@ public class MyRenderer implements Renderer {
 	}
 	
 	public void dragLight(float x0, float y0, float x1, float y1) {
-		dlighttheta = (float) ((x1 - x0)/width * Math.PI);
-		dlightphi = (float) ((y1 - y0)/height * Math.PI);
+		dlighttheta = (float) ((x1 - x0)/width * lightSC[0]);
+		dlightphi = (float) ((y1 - y0)/height * lightSC[0]);
 	}
 	
 	public void stopDragLight(float x0, float y0, float x1, float y1) {
