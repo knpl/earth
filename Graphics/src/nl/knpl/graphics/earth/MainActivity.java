@@ -1,20 +1,20 @@
-package com.knpl.graphics.cube;
+package nl.knpl.graphics.earth;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import com.knpl.graphics.cube.R;
+import nl.knpl.graphics.earth.R;
 
 public class MainActivity extends ActionBarActivity {
 
-	private MyGLSurfaceView surface;
+	private EarthGLSurfaceView surface;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-        	surface = new MyGLSurfaceView(this);
+        	surface = new EarthGLSurfaceView(this);
 	        setContentView(surface);	
         }
         catch (Exception ex) {
@@ -34,7 +34,6 @@ public class MainActivity extends ActionBarActivity {
 		super.onResume();
 		surface.onResume();
 	}
-
 
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {

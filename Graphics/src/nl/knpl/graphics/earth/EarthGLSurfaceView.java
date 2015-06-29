@@ -1,4 +1,4 @@
-package com.knpl.graphics.cube;
+package nl.knpl.graphics.earth;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -10,12 +10,12 @@ import android.content.pm.ConfigurationInfo;
 import android.content.res.AssetManager;
 import android.opengl.GLSurfaceView;
 
-public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListener {
+public class EarthGLSurfaceView extends GLSurfaceView implements DragPinchOnTouchListener.Listener {
 
-	private final MyRenderer renderer;
+	private final EarthRenderer renderer;
 	private boolean moveEye;
 	
-	public MyGLSurfaceView(Context context) throws Exception {
+	public EarthGLSurfaceView(Context context) throws Exception {
 		super(context);
 		ActivityManager am = (ActivityManager) context.getSystemService(Activity.ACTIVITY_SERVICE);
         ConfigurationInfo ci = am.getDeviceConfigurationInfo();
@@ -27,10 +27,10 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListene
         	throw new RuntimeException("OpenGL ES 2.0 not supported");
         }
         setEGLContextClientVersion(2);
-    	renderer = new MyRenderer(vsource, fsource);
+    	renderer = new EarthRenderer(vsource, fsource);
     	setRenderer(renderer);
     	
-    	setOnTouchListener(new DragPinchInput(this));
+    	setOnTouchListener(new DragPinchOnTouchListener(this));
     	
     	moveEye = true;
 	}
@@ -60,10 +60,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListene
 
 	@Override
 	public void drag(float x0, float y0, float x1, float y1) {
-		final float xx0 = x0,
-					yy0 = y0,
-					xx1 = x1,
-					yy1 = y1;
+		final float xx0 = x0, yy0 = y0, xx1 = x1, yy1 = y1;
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -77,10 +74,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListene
 
 	@Override
 	public void stopDrag(float x0, float y0, float x1, float y1) {
-		final float xx0 = x0,
-					yy0 = y0,
-					xx1 = x1,
-					yy1 = y1;
+		final float xx0 = x0, yy0 = y0, xx1 = x1, yy1 = y1;
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -98,10 +92,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListene
 
 	@Override
 	public void pinch(float x, float y, float r0, float r1) {
-		final float xx = x,
-					yy = y,
-					rr0 = r0,
-					rr1 = r1;
+		final float xx = x, yy = y, rr0 = r0, rr1 = r1;
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -115,10 +106,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements OnDragPinchListene
 
 	@Override
 	public void stopPinch(float x, float y, float r0, float r1) {
-		final float xx = x,
-				yy = y,
-				rr0 = r0,
-				rr1 = r1;
+		final float xx = x, yy = y, rr0 = r0, rr1 = r1;
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {

@@ -1,11 +1,21 @@
-package com.knpl.graphics.cube;
+package nl.knpl.graphics.earth;
 
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.MotionEvent.PointerCoords;
 import android.view.View.OnTouchListener;
 
-public class DragPinchInput implements OnTouchListener {
+public class DragPinchOnTouchListener implements OnTouchListener {
+	
+	public interface Listener {
+		public void startDrag(float x, float y);
+		public void drag(float sx, float sy, float x, float y);
+		public void stopDrag(float sx, float sy, float x, float y);
+		
+		public void startPinch(float x, float y, float r);
+		public void pinch(float x, float y, float sr, float r);
+		public void stopPinch(float x, float y, float sr, float r);
+	};
 	
 	private final ExploreState exploreState;
 	private final DragState dragState;
@@ -13,9 +23,9 @@ public class DragPinchInput implements OnTouchListener {
 	private final InvalidState invalidState;
 	
 	private State state;
-	private final OnDragPinchListener listener;
+	private final Listener listener;
 	
-	public DragPinchInput(OnDragPinchListener listener) {
+	public DragPinchOnTouchListener(Listener listener) {
 		exploreState = new ExploreState();
 		dragState = new DragState();
 		zoomState = new ZoomState();
