@@ -4,6 +4,11 @@ uniform sampler2D texsamp;
 uniform sampler2D normsamp;
 uniform sampler2D specsamp;
 
+uniform float Ka;
+uniform float Kd;
+uniform float Ks;
+uniform float shininess;
+
 varying vec3 vN;
 varying vec3 vT;
 varying vec3 vE;
@@ -18,24 +23,19 @@ vec3 getNormal() {
 	return mat3(T, B, N) * norm;
 }
 
-float attenuation(float a, float b, float c) {
-	float d = length(vL);
-	return 1.0 / (a + b*d + c*d*d);
-}
-
 void main() {
 	vec3 N = getNormal();
 	vec3 E = normalize(vE);
 	vec3 L = normalize(vL);
 	vec3 H = normalize(L + E);
 	
-	float att = attenuation(1.0, .1, .01);
+	float d = length(vL);
+	float att = 1.0 / (1.0 + 0.1*d + 0.01*d*d);
+	float lambert = max(dot(N, L), 0.0);
+	float spec = pow(max(dot(N, H), 0.0), shininess);
 	
-	float kd = max(dot(N, L), 0.0);
-	vec3 diffuse  = att * (.125 + .75 * kd) * vec3(texture2D(texsamp, vtex));
-	
-	float ks = pow(max(dot(N, H), 0.0), 20.0);
-	vec3 specular = att * .25 * ks * vec3(texture2D(specsamp, vtex));
+	vec3 diffuse  = (Ka + att * Kd * lambert) * vec3(texture2D(texsamp, vtex));
+	vec3 specular = att * Ks * spec * vec3(texture2D(specsamp, vtex));
 	
 	gl_FragColor = vec4(diffuse + specular, 1.0);
 }

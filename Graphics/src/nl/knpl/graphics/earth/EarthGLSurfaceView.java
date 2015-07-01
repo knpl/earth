@@ -53,6 +53,38 @@ public class EarthGLSurfaceView extends GLSurfaceView implements DragPinchOnTouc
 	public void toggleMode() {
 		this.moveEye = !moveEye;
 	}
+	
+	public void setAmbient(final float ambient) {
+		queueEvent(new Runnable() {
+			@Override public void run() {
+				renderer.setAmbient(ambient);
+			}
+		});
+	}
+	
+	public void setDiffuse(final float diffuse) {
+		queueEvent(new Runnable() {
+			@Override public void run() {
+				renderer.setDiffuse(diffuse);
+			}
+		});
+	}
+	
+	public void setSpecular(final float specular) {
+		queueEvent(new Runnable() {
+			@Override public void run() {
+				renderer.setSpecular(specular);
+			}
+		});
+	}
+	
+	public void setShininess(final float shininess) {
+		queueEvent(new Runnable() {
+			@Override public void run() {
+				renderer.setShininess(shininess);
+			}
+		});
+	}
 
 	@Override
 	public void startDrag(float x, float y) {

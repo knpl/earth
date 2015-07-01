@@ -2,6 +2,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.knpl.graphics.MainActivity" >
+    
+    <item
+        android:id="@+id/action_ambient_slider"
+        android:title="@string/action_ambient_slider"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_diffuse_slider"
+        android:title="@string/action_diffuse_slider"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_specular_slider"
+        android:title="@string/action_specular_slider"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_shininess_slider"
+        android:title="@string/action_shininess_slider"
+        app:showAsAction="never"/>
 
     <item
         android:id="@+id/action_mode_toggle"

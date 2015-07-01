@@ -9,13 +9,10 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView.Renderer;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import nl.knpl.graphics.earth.R;
 
 public class EarthRenderer implements Renderer {
 	
@@ -43,7 +40,8 @@ public class EarthRenderer implements Renderer {
 	
 	private float[] viewMat, projMat;
 	
-	private int ph, viewh, lightposh;
+	private int ph, viewh, lightposh,
+				ambienth, diffuseh, specularh, shininessh;
 	
 	private int nindices;
 	
@@ -53,7 +51,7 @@ public class EarthRenderer implements Renderer {
 		
 		erho = lrho = 2;
 		ephi = lphi = (float)(.5*Math.PI);
-		ethe = lthe = (float)Math.PI;
+		ethe = lthe = (float) Math.PI;
 		
 		derho = dlrho = 1;
 		dlthe = dlphi = 0;
@@ -74,11 +72,15 @@ public class EarthRenderer implements Renderer {
 		GLES20.glEnable(GLES20.GL_TEXTURE_2D);
 		
 		/* Compile vertex shaders from source. */
-		int vsh = createShader(GLES20.GL_VERTEX_SHADER, vshader);
-		int fsh = createShader(GLES20.GL_FRAGMENT_SHADER, fshader);
-		ph = createProgram(vsh, fsh, "pos", "tang", "tex");
+		int vsh = OGLUtils.createShader(GLES20.GL_VERTEX_SHADER, vshader);
+		int fsh = OGLUtils.createShader(GLES20.GL_FRAGMENT_SHADER, fshader);
+		ph = OGLUtils.createProgram(vsh, fsh, "pos", "tang", "tex");
 		
 		/* Get uniform locations. */
+		ambienth = GLES20.glGetUniformLocation(ph, "Ka");
+		diffuseh = GLES20.glGetUniformLocation(ph, "Kd");
+		specularh = GLES20.glGetUniformLocation(ph, "Ks");
+		shininessh = GLES20.glGetUniformLocation(ph, "shininess");
 		viewh = GLES20.glGetUniformLocation(ph, "view");
 		lightposh = GLES20.glGetUniformLocation(ph, "lightpos");
 		
@@ -87,6 +89,11 @@ public class EarthRenderer implements Renderer {
 		/* Initialize textures and geometry. */
 		initTextures();
 		initGeometry();
+		
+		setAmbient(MainActivity.DEFAULT_AMBIENT);
+		setDiffuse(MainActivity.DEFAULT_DIFFUSE);
+		setSpecular(MainActivity.DEFAULT_SPECULAR);
+		setShininess(MainActivity.DEFAULT_SHININESS);
 	}
 
 	@Override
@@ -127,6 +134,22 @@ public class EarthRenderer implements Renderer {
 		GLES20.glUniformMatrix4fv(viewh, 1, false, viewMat, 0);
 		GLES20.glUniform4fv(lightposh, 1, lpos, 0);
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, nindices, GLES20.GL_UNSIGNED_SHORT, 0);
+	}
+	
+	public void setAmbient(float ambient) {
+		GLES20.glUniform1f(ambienth, ambient);
+	}
+	
+	public void setDiffuse(float diffuse) {
+		GLES20.glUniform1f(diffuseh, diffuse);
+	}
+	
+	public void setSpecular(float specular) {
+		GLES20.glUniform1f(specularh, specular);
+	}
+	
+	public void setShininess(float shininess) {
+		GLES20.glUniform1f(shininessh, shininess);
 	}
 	
 	public void dragEye(float x0, float y0, float x1, float y1) {
@@ -183,9 +206,9 @@ public class EarthRenderer implements Renderer {
 		Resources res = EarthApp.getAppContext().getResources();
 		
 		/* Upload textures. */
-		loadTexture(res, opts, R.drawable.earth, textures[0]);
-		loadTexture(res, opts, R.drawable.earth_normal, textures[1]);
-		loadTexture(res, opts, R.drawable.earth_spec, textures[2]);
+		OGLUtils.initTexture(res, opts, R.drawable.earth, textures[0]);
+		OGLUtils.initTexture(res, opts, R.drawable.earth_normal, textures[1]);
+		OGLUtils.initTexture(res, opts, R.drawable.earth_spec, textures[2]);
 		
 		/* Bind textures to uniforms. */
 		int handle;
@@ -255,64 +278,5 @@ public class EarthRenderer implements Renderer {
 		handle = GLES20.glGetAttribLocation(ph, "tex");
 		GLES20.glVertexAttribPointer(handle, 2, GLES20.GL_FLOAT, false, stride, 6 * SIZEOF_FLOAT);
 		GLES20.glEnableVertexAttribArray(handle);
-	}
-	
-	public static void loadTexture(Resources res, BitmapFactory.Options opts, int resource, int handle) {
-		Bitmap bmp = BitmapFactory.decodeResource(res, resource, opts);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, handle);
-		GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
-		GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
-		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
-				GLES20.GL_LINEAR_MIPMAP_LINEAR);
-		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
-				GLES20.GL_LINEAR);
-		bmp.recycle();
-	}
-
-	public static int createShader(int type, String source) {
-		String typeString;
-		if (type == GLES20.GL_VERTEX_SHADER)
-			typeString = "vertex";
-		else if (type == GLES20.GL_FRAGMENT_SHADER)
-			typeString = "fragment";
-		else
-			throw new RuntimeException("Unknown shader type");
-		
-		int sh = GLES20.glCreateShader(type);
-		if (sh <= 0) {
-			throw new RuntimeException("Could not create "+typeString+" shader");
-		}
-		GLES20.glShaderSource(sh, source);
-		GLES20.glCompileShader(sh);
-		int[] status = new int[1];
-		GLES20.glGetShaderiv(sh, GLES20.GL_COMPILE_STATUS, status, 0);
-		if (status[0] <= 0) {
-			String message = GLES20.glGetShaderInfoLog(sh);
-			GLES20.glDeleteShader(sh);
-			throw new RuntimeException("Could not compile "+typeString+" shader: "+message);
-		}
-		
-		return sh;
-	}
-	
-	public static int createProgram(int vsh, int fsh, String... attributes) {
-		int[] status = new int[1];
-		int ph = GLES20.glCreateProgram();
-		if (ph <= 0) {
-			throw new RuntimeException("Could not create program");
-		}
-		GLES20.glAttachShader(ph, vsh);
-		GLES20.glAttachShader(ph, fsh);
-		for (int i = 0; i < attributes.length; ++i) {
-			GLES20.glBindAttribLocation(ph, i, attributes[i]);
-		}
-		GLES20.glLinkProgram(ph);
-		GLES20.glGetProgramiv(ph, GLES20.GL_LINK_STATUS, status, 0);
-		if (status[0] == 0) {
-			GLES20.glDeleteProgram(ph);
-			throw new RuntimeException("Could not link program");
-		}
-		
-		return ph;
 	}
 }

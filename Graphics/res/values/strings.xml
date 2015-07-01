@@ -2,6 +2,10 @@
 <resources>
 
     <string name="app_name">3D Earth Demo</string>
+    <string name="action_ambient_slider">Change ambient</string>
+    <string name="action_diffuse_slider">Change diffuse</string>
+    <string name="action_specular_slider">Change specular</string>
+    <string name="action_shininess_slider">Change shininess</string>
     <string name="action_mode_toggle">Toggle camera/light control</string>
 
 </resources>
