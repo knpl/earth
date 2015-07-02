@@ -26,6 +26,7 @@
     <item
         android:id="@+id/action_mode_toggle"
         android:title="@string/action_mode_toggle"
-        app:showAsAction="never"/>
+        android:icon="@drawable/ic_action_brightness_high"
+        app:showAsAction="ifRoom"/>
 
 </menu>

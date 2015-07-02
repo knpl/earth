@@ -20,12 +20,14 @@ public class MainActivity extends ActionBarActivity implements SeekBarDialogList
 							  DEFAULT_SHININESS = 20f;
 	
 	private float ambient, diffuse, specular, shininess;
+	private boolean eye;
 	
 	private EarthGLSurfaceView surface;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         try {
         	surface = new EarthGLSurfaceView(this);
         }
@@ -34,12 +36,15 @@ public class MainActivity extends ActionBarActivity implements SeekBarDialogList
         	finish();
         }
         
+        setContentView(surface);
+        
         surface.setAmbient(ambient = DEFAULT_AMBIENT);
         surface.setDiffuse(diffuse = DEFAULT_DIFFUSE);
         surface.setSpecular(specular = DEFAULT_SPECULAR);
         surface.setShininess(shininess = DEFAULT_SHININESS);
         
-        setContentView(surface);
+        surface.setMode(eye = true);
+        
     }
 
 	@Override
@@ -81,7 +86,8 @@ public class MainActivity extends ActionBarActivity implements SeekBarDialogList
         	frag.show(getSupportFragmentManager(), "shininess");
         	break;
         case R.id.action_mode_toggle:
-        	surface.toggleMode();
+        	surface.setMode(eye = !eye);
+        	item.setIcon(eye ? R.drawable.ic_action_brightness_high : R.drawable.ic_action_video);
         	break;
         default:
         	/* Do nothing */

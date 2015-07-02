@@ -29,7 +29,7 @@ public class EarthGLSurfaceView extends GLSurfaceView implements DragPinchOnTouc
         setEGLContextClientVersion(2);
     	renderer = new EarthRenderer(vsource, fsource);
     	setRenderer(renderer);
-    	
+    	setPreserveEGLContextOnPause(true);
     	setOnTouchListener(new DragPinchOnTouchListener(this));
     	
     	moveEye = true;
@@ -50,8 +50,8 @@ public class EarthGLSurfaceView extends GLSurfaceView implements DragPinchOnTouc
 		return baos.toString("UTF-8");
 	}
 	
-	public void toggleMode() {
-		this.moveEye = !moveEye;
+	public void setMode(boolean mode) {
+		this.moveEye = mode;
 	}
 	
 	public void setAmbient(final float ambient) {
