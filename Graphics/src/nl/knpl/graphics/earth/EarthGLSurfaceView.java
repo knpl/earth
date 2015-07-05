@@ -29,7 +29,6 @@ public class EarthGLSurfaceView extends GLSurfaceView implements DragPinchOnTouc
         setEGLContextClientVersion(2);
     	renderer = new EarthRenderer(vsource, fsource);
     	setRenderer(renderer);
-    	setPreserveEGLContextOnPause(true);
     	setOnTouchListener(new DragPinchOnTouchListener(this));
     	
     	moveEye = true;

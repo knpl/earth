@@ -44,9 +44,9 @@ public class Sphere {
 		// build data
 		int k = 0;
 		data = new float[N * nvecs];
-		phi = 0;
+		phi = 0.0;
 		for (int i = 0; i <= n; ++i) {
-			the = 0;
+			the = 0.0;
 			for (int j = 0; j <= n; ++j) {
 				w(k++, the, phi);
 				the += step;
@@ -56,8 +56,8 @@ public class Sphere {
 		
 		// build indices
 		k = 0;
-		idx = new short[6 * n * (n + 1)];
-		for (int i = 0; i <= n; ++i) {
+		idx = new short[6 * n * n];
+		for (int i = 0; i < n; ++i) {
 			int u = i * (n + 1);
 			int d = (i + 1) * (n + 1);
 			for (int j = 0; j < n; ++j) {
