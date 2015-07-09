@@ -39,6 +39,10 @@ public class MainActivity extends ActionBarActivity implements SeekBarDialogList
         setContentView(surface);
         surface.setMode(eye = true);
         
+        ambient = DEFAULT_AMBIENT;
+        diffuse = DEFAULT_DIFFUSE;
+        specular = DEFAULT_SPECULAR;
+        shininess = DEFAULT_SHININESS;
     }
 
 	@Override
